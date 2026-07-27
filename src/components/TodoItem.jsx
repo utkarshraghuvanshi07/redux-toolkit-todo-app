@@ -1,43 +1,65 @@
-import { useDispatch } from "react-redux";
-import {
-  deleteTodo,
-  toggleTodo,
-} from "../features/todo/todoSlice";
+import { useState } from 'react'
+import { useDispatch } from 'react-redux'
+import { todoToggled, todoEdited, todoDeleted } from '../features/todos/todosSlice'
 
-const TodoItem = ({ todo }) => {
-  const dispatch = useDispatch();
+export default function TodoItem({ todo, accent }) {
+  const dispatch = useDispatch()
+  const [isEditing, setIsEditing] = useState(false)
+  const [draft, setDraft] = useState(todo.text)
+
+  const saveEdit = () => {
+    const trimmed = draft.trim()
+    if (trimmed) dispatch(todoEdited({ id: todo.id, text: trimmed }))
+    else setDraft(todo.text)
+    setIsEditing(false)
+  }
 
   return (
-    <div className="flex justify-between items-center bg-gray-100 p-3 rounded-lg">
+    <li
+      className={`card${todo.completed ? ' card--done' : ''}`}
+      style={{ '--accent': accent }}
+    >
+      <button
+        className="card__check"
+        onClick={() => dispatch(todoToggled(todo.id))}
+        aria-label={todo.completed ? 'Mark as not done' : 'Mark as done'}
+      >
+        {todo.completed ? '✓' : ''}
+      </button>
 
-      <div className="flex items-center gap-3">
-
+      {isEditing ? (
         <input
-          type="checkbox"
-          checked={todo.completed}
-          onChange={() => dispatch(toggleTodo(todo.id))}
+          className="card__edit-input"
+          value={draft}
+          autoFocus
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={saveEdit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') saveEdit()
+            if (e.key === 'Escape') {
+              setDraft(todo.text)
+              setIsEditing(false)
+            }
+          }}
         />
-
-        <span
-          className={
-            todo.completed
-              ? "line-through text-gray-400"
-              : ""
-          }
-        >
+      ) : (
+        <span className="card__text" onDoubleClick={() => setIsEditing(true)}>
           {todo.text}
         </span>
+      )}
 
+      <div className="card__actions">
+        <button className="icon-btn" onClick={() => setIsEditing(true)} aria-label="Edit">
+          ✎
+        </button>
+        <button
+          className="icon-btn icon-btn--danger"
+          onClick={() => dispatch(todoDeleted(todo.id))}
+          aria-label="Delete"
+        >
+          ✕
+        </button>
       </div>
-
-      <button
-        onClick={() => dispatch(deleteTodo(todo.id))}
-        className="bg-red-500 text-white px-3 py-1 rounded"
-      >
-        Delete
-      </button>
-    </div>
-  );
-};
-
-export default TodoItem;
+    </li>
+  )
+}

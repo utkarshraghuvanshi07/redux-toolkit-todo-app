@@ -1,24 +1,32 @@
-import { useSelector } from "react-redux";
-import TodoItem from "./TodoItem";
+import { useSelector } from 'react-redux'
+import { selectAllTodos } from '../features/todos/todosSlice'
+import TodoItem from './TodoItem'
 
-const TodoList = () => {
-  const todos = useSelector((state) => state.todos.todos);
+const ACCENTS = ['#6c5ce7', '#ff5fa2', '#a4e000']
 
-  if (todos.length === 0) {
+export default function TodoList({ filter }) {
+  const todos = useSelector(selectAllTodos)
+
+  const visible = todos.filter((todo) => {
+    if (filter === 'active') return !todo.completed
+    if (filter === 'completed') return todo.completed
+    return true
+  })
+
+  if (visible.length === 0) {
     return (
-      <p className="text-center text-gray-500">
-        No tasks yet 🚀
-      </p>
-    );
+      <div className="empty-state">
+        <span className="empty-state__emoji">🎈</span>
+        <p>nothing here yet — add your first task above</p>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-3">
-      {todos.map((todo) => (
-        <TodoItem key={todo.id} todo={todo} />
+    <ul className="todo-list">
+      {visible.map((todo, i) => (
+        <TodoItem key={todo.id} todo={todo} accent={ACCENTS[i % ACCENTS.length]} />
       ))}
-    </div>
-  );
-};
-
-export default TodoList;
+    </ul>
+  )
+}
